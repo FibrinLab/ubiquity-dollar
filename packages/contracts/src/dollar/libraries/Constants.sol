@@ -82,6 +82,11 @@ uint256 constant ACCURACY = 10e18;
 /// @dev Max connector weight used in `LibBondingCurve`
 uint32 constant MAX_WEIGHT = 1e6;
 
+int256 constant UAD_MINT_CAP = int256(100000000e18);
+int256 constant GOV_MINT_CAP = int256(100000000e18);
+uint256 constant PRICE_PRECISION = 1e6;
+uint256 constant MIN_CR = 810000;
+
 /// @dev keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
 bytes32 constant PERMIT_TYPEHASH = 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9;
 

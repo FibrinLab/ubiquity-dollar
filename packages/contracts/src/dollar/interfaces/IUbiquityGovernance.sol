@@ -7,5 +7,5 @@ import "./IERC20Ubiquity.sol";
  * @notice Ubiquity Governance token interface
  */
 interface IUbiquityGovernanceToken is IERC20Ubiquity {
-
+    function pool_burn_from(address account, uint256 amount) external view;
 }

@@ -41,9 +41,39 @@ contract UbiquityAMOMinterFacet is Modifiers, IUbiquityAMOMinter {
         return LibUbiquityAMOMinter.uADTrackedAMO(_amo_address);
     }
 
-    function syncDollarBalances() public {
+    function syncDollarBalances() external view {
         LibUbiquityAMOMinter.syncDollarBalances();
     }
+
+    function mintUadForAMO(
+        address _destination_amo,
+        uint256 _uad_amount
+    ) external onlyTokenManager {
+        LibUbiquityAMOMinter.mintUadForAMO(_destination_amo, _uad_amount);
+    }
+
+    function burnUadFromAMO(uint256 _uad_amount) external onlyTokenManager {
+        LibUbiquityAMOMinter.burnUadFromAMO(_uad_amount);
+    }
+
+    // ------------------------------------------------------------------
+    // ------------------------------- GOV ------------------------------
+    // ------------------------------------------------------------------
+
+    function mintGovForAMO(
+        address _destination_amo,
+        uint256 _gov_amount
+    ) external onlyTokenManager {
+        LibUbiquityAMOMinter.mintGovForAMO(_destination_amo, _gov_amount);
+    }
+
+    function burnGovFromAMO(uint256 _gov_amount) external {
+        LibUbiquityAMOMinter.burnGovFromAMO(_gov_amount);
+    }
+
+    // ------------------------------------------------------------------
+    // --------------------------- Collateral ---------------------------
+    // ------------------------------------------------------------------
 
     function giveCollatToAMO(
         address _destination_amo,
@@ -84,8 +114,8 @@ contract UbiquityAMOMinterFacet is Modifiers, IUbiquityAMOMinter {
         LibUbiquityAMOMinter.setUadMintCap(_uAD_mint_cap);
     }
 
-    function setuGovMintCap(uint256 _uGov_mint_cap) external onlyTokenManager {
-        LibUbiquityAMOMinter.setuGovMintCap(_uGov_mint_cap);
+    function setGovMintCap(uint256 _uGov_mint_cap) external onlyTokenManager {
+        LibUbiquityAMOMinter.setGovMintCap(_uGov_mint_cap);
     }
 
     function setCollatBorrowCap(

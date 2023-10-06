@@ -32,4 +32,8 @@ interface IUbiquityDollarToken is IERC20Ubiquity {
      * @return Incentive contract address
      */
     function incentiveContract(address account) external view returns (address);
+
+    function globalCollateralValue() external view returns (uint256);
+
+    function pool_burn_from(address account, uint256 amount) external view;
 }

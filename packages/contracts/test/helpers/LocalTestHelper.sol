@@ -2,27 +2,21 @@
 pragma solidity 0.8.19;
 
 import {MockTWAPOracleDollar3pool} from "../../src/dollar/mocks/MockTWAPOracleDollar3pool.sol";
-import {DiamondSetup} from "../diamond/DiamondTestSetup.sol";
-import {ManagerFacet} from "../../src/dollar/facets/ManagerFacet.sol";
+import {DiamondTestSetup} from "../diamond/DiamondTestSetup.sol";
 import {TWAPOracleDollar3poolFacet} from "../../src/dollar/facets/TWAPOracleDollar3poolFacet.sol";
 import {CreditRedemptionCalculatorFacet} from "../../src/dollar/facets/CreditRedemptionCalculatorFacet.sol";
 import {CreditNftRedemptionCalculatorFacet} from "../../src/dollar/facets/CreditNftRedemptionCalculatorFacet.sol";
 import {DollarMintCalculatorFacet} from "../../src/dollar/facets/DollarMintCalculatorFacet.sol";
 import {CreditNftManagerFacet} from "../../src/dollar/facets/CreditNftManagerFacet.sol";
 import {DollarMintExcessFacet} from "../../src/dollar/facets/DollarMintExcessFacet.sol";
-import {UbiquityDollarToken} from "../../src/dollar/core/UbiquityDollarToken.sol";
-import {UbiquityCreditToken} from "../../src/dollar/core/UbiquityCreditToken.sol";
 import {MockMetaPool} from "../../src/dollar/mocks/MockMetaPool.sol";
 
-abstract contract LocalTestHelper is DiamondSetup {
+abstract contract LocalTestHelper is DiamondTestSetup {
     address public constant NATIVE_ASSET = address(0);
     address curve3CRVTokenAddress = address(0x101);
     address public treasuryAddress = address(0x111222333);
 
-    TWAPOracleDollar3poolFacet twapOracle;
-
     CreditNftRedemptionCalculatorFacet creditNftRedemptionCalculator;
-    UbiquityCreditToken creditToken;
     CreditRedemptionCalculatorFacet creditRedemptionCalculator;
     DollarMintCalculatorFacet dollarMintCalculator;
     CreditNftManagerFacet creditNftManager;
@@ -32,25 +26,24 @@ abstract contract LocalTestHelper is DiamondSetup {
     function setUp() public virtual override {
         super.setUp();
 
-        twapOracle = ITWAPOracleDollar3pool;
-        creditNftRedemptionCalculator = ICreditNftRedemptionCalculationFacet;
-        creditRedemptionCalculator = ICreditRedemptionCalculationFacet;
-        dollarMintCalculator = IDollarMintCalcFacet;
-        creditNftManager = ICreditNftManagerFacet;
-        dollarMintExcess = IDollarMintExcessFacet;
+        creditNftRedemptionCalculator = creditNftRedemptionCalculationFacet;
+        creditRedemptionCalculator = creditRedemptionCalculationFacet;
+        dollarMintCalculator = dollarMintCalculatorFacet;
+        creditNftManager = creditNftManagerFacet;
+        dollarMintExcess = dollarMintExcessFacet;
 
         vm.startPrank(admin);
 
         //mint some dollar token
-        IDollar.mint(address(0x1045256), 10000e18);
+        dollarToken.mint(address(0x1045256), 10000e18);
         require(
-            IDollar.balanceOf(address(0x1045256)) == 10000e18,
+            dollarToken.balanceOf(address(0x1045256)) == 10000e18,
             "dollar balance is not 10000e18"
         );
 
         // twapPrice oracle
         metaPoolAddress = address(
-            new MockMetaPool(address(IDollar), curve3CRVTokenAddress)
+            new MockMetaPool(address(dollarToken), curve3CRVTokenAddress)
         );
         // set the mock data for meta pool
         uint256[2] memory _price_cumulative_last = [
@@ -68,15 +61,16 @@ abstract contract LocalTestHelper is DiamondSetup {
         );
 
         // deploy credit token
-        creditToken = new UbiquityCreditToken(address(diamond));
-        IManager.setCreditTokenAddress(address(creditToken));
 
         // set treasury address
-        IManager.setTreasuryAddress(treasuryAddress);
+        managerFacet.setTreasuryAddress(treasuryAddress);
 
         vm.stopPrank();
         vm.prank(owner);
-        ITWAPOracleDollar3pool.setPool(metaPoolAddress, curve3CRVTokenAddress);
-        ITWAPOracleDollar3pool.update();
+        twapOracleDollar3PoolFacet.setPool(
+            metaPoolAddress,
+            curve3CRVTokenAddress
+        );
+        twapOracleDollar3PoolFacet.update();
     }
 }

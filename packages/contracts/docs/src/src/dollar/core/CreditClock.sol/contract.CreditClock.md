@@ -1,5 +1,5 @@
 # CreditClock
-[Git Source](https://github.com/ubiquity/ubiquity-dollar/blob/e88784f36aa579c1fdb9437e9ef9cdafefb31fa7/src/dollar/core/CreditClock.sol)
+[Git Source](https://github.com/ubiquity/ubiquity-dollar/blob/edf5f533467baa5ab7defe2b4b5180fa47724cdb/src/dollar/core/CreditClock.sol)
 
 CreditClock contract
 

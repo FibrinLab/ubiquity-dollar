@@ -6,6 +6,7 @@ import "../../helpers/LocalTestHelper.sol";
 import {IMetaPool} from "../../../src/dollar/interfaces/IMetaPool.sol";
 import {StakingShare} from "../../../src/dollar/core/StakingShare.sol";
 import "../../../src/dollar/libraries/Constants.sol";
+import {BondingShare} from "../../../src/dollar/mocks/MockShareV1.sol";
 
 contract DepositStakingShare is LocalTestHelper {
     address treasury = address(0x3);
@@ -22,7 +23,6 @@ contract DepositStakingShare is LocalTestHelper {
     uint256 maxBal;
     uint256[] creationBlock;
     IMetaPool metapool;
-    StakingShare stakingShare;
 
     event Paused(address _caller);
     event Unpaused(address _caller);
@@ -38,7 +38,10 @@ contract DepositStakingShare is LocalTestHelper {
         super.setUp();
         // grant diamond token staking share right rights
         vm.prank(admin);
-        IAccessControl.grantRole(STAKING_SHARE_MINTER_ROLE, address(diamond));
+        accessControlFacet.grantRole(
+            STAKING_SHARE_MINTER_ROLE,
+            address(diamond)
+        );
         metapool = IMetaPool(metaPoolAddress);
         fourthBal = metapool.balanceOf(fourthAccount);
         minBal = metapool.balanceOf(stakingMinAccount);
@@ -64,12 +67,11 @@ contract DepositStakingShare is LocalTestHelper {
 
         for (uint256 i; i < depositingAccounts.length; ++i) {
             vm.startPrank(depositingAccounts[i]);
-            metapool.approve(address(IStakingFacet), 2 ** 256 - 1);
+            metapool.approve(address(stakingFacet), 2 ** 256 - 1);
             creationBlock.push(block.number);
-            IStakingFacet.deposit(depositAmounts[i], lockupWeeks[i]);
+            stakingFacet.deposit(depositAmounts[i], lockupWeeks[i]);
             vm.stopPrank();
         }
-        stakingShare = IStakingShareToken;
     }
 }
 
@@ -83,7 +85,7 @@ contract StakingShareTest is DepositStakingShare {
         uint256 end
     ) public {
         vm.prank(admin);
-        IAccessControl.grantRole(STAKING_SHARE_MINTER_ROLE, address(admin));
+        accessControlFacet.grantRole(STAKING_SHARE_MINTER_ROLE, address(admin));
         vm.prank(admin);
         stakingShare.updateStake(1, uint256(amount), uint256(debt), end);
         StakingShare.Stake memory stake = stakingShare.getStake(1);
@@ -121,7 +123,7 @@ contract StakingShareTest is DepositStakingShare {
         uint256 end
     ) public {
         vm.prank(admin);
-        IAccessControl.grantRole(STAKING_SHARE_MINTER_ROLE, address(admin));
+        accessControlFacet.grantRole(STAKING_SHARE_MINTER_ROLE, address(admin));
         vm.prank(admin);
         uint256 id = stakingShare.mint(
             secondAccount,
@@ -176,33 +178,33 @@ contract StakingShareTest is DepositStakingShare {
         emit Paused(admin);
 
         vm.prank(admin);
-        IAccessControl.pause();
+        accessControlFacet.pause();
     }
 
     function testPause_ShouldRevert_IfNotPauser() public {
         vm.expectRevert("Manager: Caller is not admin");
         vm.prank(secondAccount);
-        IAccessControl.pause();
+        accessControlFacet.pause();
     }
 
     function testUnpause_ShouldUnpause() public {
         vm.prank(admin);
-        IAccessControl.pause();
+        accessControlFacet.pause();
 
         vm.expectEmit(true, false, false, true);
         emit Unpaused(admin);
 
         vm.prank(admin);
-        IAccessControl.unpause();
+        accessControlFacet.unpause();
     }
 
     function testUnpause_ShouldRevert_IfNotPauser() public {
         vm.prank(admin);
-        IAccessControl.pause();
+        accessControlFacet.pause();
 
         vm.expectRevert("Manager: Caller is not admin");
         vm.prank(secondAccount);
-        IAccessControl.unpause();
+        accessControlFacet.unpause();
     }
 
     function testSafeTransferFrom_ShouldTransferTokenId() public {
@@ -312,12 +314,12 @@ contract StakingShareTest is DepositStakingShare {
             fourthAccount,
             fourthBal,
             creationBlock[1],
-            IStakingFormulasFacet.durationMultiply(
+            stakingFormulasFacet.durationMultiply(
                 fourthBal,
                 52,
-                IStakingFacet.stakingDiscountMultiplier()
+                stakingFacet.stakingDiscountMultiplier()
             ),
-            IStakingFacet.blockCountInAWeek() * 52,
+            stakingFacet.blockCountInAWeek() * 52,
             fourthBal
         );
 
@@ -329,7 +331,7 @@ contract StakingShareTest is DepositStakingShare {
 
     function testSetUri_ShouldSetUri() public {
         vm.prank(admin);
-        IAccessControl.grantRole(STAKING_SHARE_MINTER_ROLE, address(admin));
+        accessControlFacet.grantRole(STAKING_SHARE_MINTER_ROLE, address(admin));
 
         string memory stringTest = "{'name':'Staking Share','description':,"
         "'Ubiquity Staking Share',"
@@ -345,7 +347,7 @@ contract StakingShareTest is DepositStakingShare {
 
     function testSetBaseUri_ShouldSetUri() public {
         vm.prank(admin);
-        IAccessControl.grantRole(STAKING_SHARE_MINTER_ROLE, address(admin));
+        accessControlFacet.grantRole(STAKING_SHARE_MINTER_ROLE, address(admin));
 
         string memory stringTest = "{'name':'Staking Share','description':,"
         "'Ubiquity Staking Share',"
@@ -361,7 +363,7 @@ contract StakingShareTest is DepositStakingShare {
 
     function testSetUriSingle_ShouldSetUri() public {
         vm.prank(admin);
-        IAccessControl.grantRole(STAKING_SHARE_MINTER_ROLE, address(admin));
+        accessControlFacet.grantRole(STAKING_SHARE_MINTER_ROLE, address(admin));
 
         string memory stringTest = "{'name':'Staking Share','description':,"
         "'Ubiquity Staking Share',"
@@ -382,5 +384,161 @@ contract StakingShareTest is DepositStakingShare {
         vm.expectRevert("Staking Share: not minter");
         vm.prank(fifthAccount);
         stakingShare.setUri(1, stringTest);
+    }
+
+    function testUUPS_ShouldUpgradeAndCall() external {
+        BondingShare bondingShare = new BondingShare();
+
+        string
+            memory uri = "https://bafybeifibz4fhk4yag5reupmgh5cdbm2oladke4zfd7ldyw7avgipocpmy.ipfs.infura-ipfs.io/";
+
+        vm.startPrank(admin);
+        bytes memory hasUpgradedCall = abi.encodeWithSignature("hasUpgraded()");
+
+        // trying to directly call will fail and exit early so call it like this
+        (bool success, ) = address(stakingShare).call(hasUpgradedCall);
+        assertEq(success, false, "should not have upgraded yet");
+        require(success == false, "should not have upgraded yet");
+
+        stakingShare.upgradeTo(address(bondingShare));
+
+        // It will also fail unless cast so we'll use the same pattern as above
+        (success, ) = address(stakingShare).call(hasUpgradedCall);
+        assertEq(success, true, "should have upgraded");
+        require(success == true, "should have upgraded");
+
+        vm.expectRevert();
+        stakingShare.initialize(address(diamond), uri);
+
+        vm.stopPrank();
+    }
+
+    function testUUPS_ImplChanges() external {
+        BondingShare bondingShare = new BondingShare();
+
+        address oldImpl = address(stakingShare);
+        address newImpl = address(bondingShare);
+
+        vm.prank(admin);
+        stakingShare.upgradeTo(newImpl);
+
+        bytes memory getImplCall = abi.encodeWithSignature("getImpl()");
+
+        (bool success, bytes memory data) = address(stakingShare).call(
+            getImplCall
+        );
+        assertEq(success, true, "should have upgraded");
+
+        address newAddrViaNewFunc = abi.decode(data, (address));
+
+        assertEq(
+            newAddrViaNewFunc,
+            newImpl,
+            "should be the new implementation"
+        );
+        assertTrue(
+            newAddrViaNewFunc != oldImpl,
+            "should not be the old implementation"
+        );
+    }
+
+    function testUUPS_InitializedVersion() external {
+        uint expectedVersion = 1;
+        uint baseExpectedVersion = 255;
+
+        BondingShare bondingShare = new BondingShare();
+        BondingShareUpgraded bondingShareUpgraded = new BondingShareUpgraded();
+
+        vm.startPrank(admin);
+        stakingShare.upgradeTo(address(bondingShare));
+
+        bytes memory getVersionCall = abi.encodeWithSignature("getVersion()");
+
+        (bool success, bytes memory data) = address(stakingShare).call(
+            getVersionCall
+        );
+        assertEq(success, true, "should have upgraded");
+        uint8 version = abi.decode(data, (uint8));
+
+        assertEq(
+            version,
+            expectedVersion,
+            "should be the same version as only initialized once"
+        );
+
+        stakingShare.upgradeTo(address(bondingShareUpgraded));
+
+        (success, data) = address(stakingShare).call(getVersionCall);
+        assertEq(success, true, "should have upgraded");
+        version = abi.decode(data, (uint8));
+
+        assertEq(
+            version,
+            expectedVersion,
+            "should be the same version as only initialized once"
+        );
+
+        (success, data) = address(bondingShare).call(getVersionCall);
+        assertEq(success, true, "should succeed");
+        version = abi.decode(data, (uint8));
+
+        assertEq(
+            version,
+            baseExpectedVersion,
+            "should be maxed as initializers are disabled."
+        );
+    }
+
+    function testUUPS_initialization() external {
+        BondingShare bondingShare = new BondingShare();
+
+        vm.startPrank(admin);
+        vm.expectRevert();
+        bondingShare.initialize(address(diamond), "test");
+
+        vm.expectRevert();
+        stakingShare.initialize(address(diamond), "test");
+
+        vm.expectRevert();
+        stakingShare.initialize(address(diamond), "test");
+
+        stakingShare.upgradeTo(address(bondingShare));
+
+        vm.expectRevert();
+        stakingShare.initialize(address(diamond), "test");
+    }
+
+    function testUUPS_AdminAuth() external {
+        BondingShare bondingShare = new BondingShare();
+
+        vm.expectRevert();
+        stakingShare.upgradeTo(address(bondingShare));
+
+        vm.prank(admin);
+        stakingShare.upgradeTo(address(bondingShare));
+
+        bytes memory hasUpgradedCall = abi.encodeWithSignature("hasUpgraded()");
+        (bool success, bytes memory data) = address(stakingShare).call(
+            hasUpgradedCall
+        );
+        bool hasUpgraded = abi.decode(data, (bool));
+
+        assertEq(hasUpgraded, true, "should have upgraded");
+        assertEq(success, true, "should have upgraded");
+        require(success == true, "should have upgraded");
+    }
+}
+
+contract BondingShareUpgraded is BondingShare {
+    function hasUpgraded() public pure override returns (bool) {
+        return true;
+    }
+
+    function getVersion() public view override returns (uint8) {
+        return super._getInitializedVersion();
+    }
+
+    function getImpl() public view override returns (address) {
+        return super._getImplementation();
     }
 }

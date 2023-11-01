@@ -6,7 +6,7 @@ import "../../../src/dollar/libraries/Constants.sol";
 import "../DiamondTestSetup.sol";
 import {MockERC20} from "../../../src/dollar/mocks/MockERC20.sol";
 
-contract CollectableDustFacetTest is DiamondSetup {
+contract CollectableDustFacetTest is DiamondTestSetup {
     address mock_sender = address(0x111);
     address mock_recipient = address(0x222);
     address mock_operator = address(0x333);
@@ -22,7 +22,7 @@ contract CollectableDustFacetTest is DiamondSetup {
 
         vm.startPrank(admin);
 
-        IAccessControl.grantRole(STAKING_MANAGER_ROLE, stakingManager);
+        accessControlFacet.grantRole(STAKING_MANAGER_ROLE, stakingManager);
 
         // deploy mock token
         mockToken = new MockERC20("Mock", "MCK", 18);
@@ -37,14 +37,14 @@ contract CollectableDustFacetTest is DiamondSetup {
         vm.startPrank(admin);
         vm.expectEmit(true, true, true, true);
         emit ProtocolTokenAdded(address(diamond));
-        ICollectableDustFacet.addProtocolToken(address(diamond));
+        collectableDustFacet.addProtocolToken(address(diamond));
         // mint dollar
 
-        IDollar.mint(address(diamond), 100);
+        dollarToken.mint(address(diamond), 100);
         vm.stopPrank();
         vm.prank(stakingManager);
         vm.expectRevert("collectable-dust::token-is-part-of-the-protocol");
-        ICollectableDustFacet.sendDust(mock_recipient, address(diamond), 100);
+        collectableDustFacet.sendDust(mock_recipient, address(diamond), 100);
     }
 
     // test sendDust function should work only for staking manager
@@ -53,7 +53,7 @@ contract CollectableDustFacetTest is DiamondSetup {
         vm.prank(stakingManager);
         vm.expectEmit(true, true, true, true);
         emit DustSent(mock_recipient, address(mockToken), 100);
-        ICollectableDustFacet.sendDust(mock_recipient, address(mockToken), 100);
+        collectableDustFacet.sendDust(mock_recipient, address(mockToken), 100);
         assertEq(mockToken.balanceOf(mock_recipient), 100);
     }
 
@@ -61,19 +61,23 @@ contract CollectableDustFacetTest is DiamondSetup {
     function testSendDust_ShouldWorkWhenNotPartOfTheProtocol() public {
         vm.startPrank(admin);
 
-        ICollectableDustFacet.addProtocolToken(address(diamond));
+        collectableDustFacet.addProtocolToken(address(diamond));
         vm.expectEmit(true, true, true, true);
         emit ProtocolTokenRemoved(address(diamond));
-        ICollectableDustFacet.removeProtocolToken(address(diamond));
+        collectableDustFacet.removeProtocolToken(address(diamond));
         // mint dollar
 
-        IDollar.mint(address(diamond), 100);
+        dollarToken.mint(address(diamond), 100);
         vm.stopPrank();
-        assertEq(IDollar.balanceOf(address(diamond)), 100);
+        assertEq(dollarToken.balanceOf(address(diamond)), 100);
         vm.prank(stakingManager);
 
-        ICollectableDustFacet.sendDust(mock_recipient, address(IDollar), 100);
-        assertEq(IDollar.balanceOf(address(diamond)), 0);
-        assertEq(IDollar.balanceOf(address(mock_recipient)), 100);
+        collectableDustFacet.sendDust(
+            mock_recipient,
+            address(dollarToken),
+            100
+        );
+        assertEq(dollarToken.balanceOf(address(diamond)), 0);
+        assertEq(dollarToken.balanceOf(address(mock_recipient)), 100);
     }
 }

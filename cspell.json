@@ -50,6 +50,7 @@
     "coef",
     "collateralized",
     "commitlint",
+    "concat",
     "connectkit",
     "Consts",
     "Cpath",
@@ -153,7 +154,9 @@
     "Txpool",
     "nomicfoundation",
     "blockhash",
-    "Merkle"
+    "Merkle",
+    "UUPS",
+    "Initializable"
   ],
   "flagWords": ["creditNFT", "CreditNFT"],
   "language": "en-US"

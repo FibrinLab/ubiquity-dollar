@@ -1,5 +1,5 @@
 # IDiamondLoupe
-[Git Source](https://github.com/ubiquity/ubiquity-dollar/blob/e88784f36aa579c1fdb9437e9ef9cdafefb31fa7/src/dollar/interfaces/IDiamondLoupe.sol)
+[Git Source](https://github.com/ubiquity/ubiquity-dollar/blob/7c3a0bb87e5e9b32000b3291b4e7da4b119ff3fa/src/dollar/interfaces/IDiamondLoupe.sol)
 
 A loupe is a small magnifying glass used to look at diamonds.
 These functions look at diamonds.
